@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ninja Math Dojo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Kaushan+Script&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful dojo, big numbers, almost no words
+   IDEA: a karate belt test; every right answer lands a punch, kick or throw on a sparring partner
+   PICTURE: his ninja (in his current belt) facing a purple rival, equation on a wooden sign
+   COLOUR and TYPE: white shoji wall, warm wood, dojo red; Baloo 2 numbers, brush-script title
+   LAYOUT: one phone column: sign, arena/hint, 2x2 answer buttons */
+:root{color-scheme:light dark;--wall:light-dark(#fbfaf6,#17161c);--ink:light-dark(#1b1b22,#f3efe6);--muted:light-dark(#5d5a52,#b8b2a4);
+--wood:light-dark(#b8783e,#8a5730);--wood2:light-dark(#8f5527,#5f3a1f);--red:#d62828;--mat:light-dark(#dcd5a4,#3d3b2b);
+--card:light-dark(#ffffff,#25242c);--line:light-dark(#1b1b22,#050507);--good:#2a9d4b;--suit:light-dark(#2b2a34,#3a3846);--edge:light-dark(#2b2a34,#8f8aa0);--belt:#f4f4f4}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--wall);color:var(--ink);font:17px/1.4 'Baloo 2',system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent;
+background-image:linear-gradient(90deg,light-dark(#0000000a,#ffffff08) 2px,transparent 2px),linear-gradient(light-dark(#0000000a,#ffffff08) 2px,transparent 2px);background-size:64px 80px}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+.app{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;gap:10px;height:58px}
+.icon{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;padding:0}
+.icon svg{width:22px;height:22px}
+.chip{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:18px}
+.swatch{width:34px;height:12px;border-radius:3px;background:var(--belt);border:2px solid var(--line)}
+[hidden]{display:none!important}
+section{flex:1;display:flex;flex-direction:column}
+/* home */
+.hero{display:grid;place-items:center;padding:6px 0 14px;position:relative}
+.hero h1{font:400 clamp(40px,12vw,52px)/1.05 'Kaushan Script',cursive;margin:0;color:var(--red);text-wrap:balance}
+.duo{display:flex;gap:30px;align-items:flex-end;margin-top:4px}.duo .fighter{width:118px;height:138px}
+.mat{width:300px;max-width:90%;height:20px;margin-top:-16px;border-radius:50%;background:var(--mat)}
+.levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.lvl{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px;align-items:stretch;box-shadow:0 5px 0 var(--line)}
+.lvl h2{margin:0;font-size:34px;line-height:1;text-align:center;font-weight:800}
+.lvl .beltpic{height:44px;display:block;margin:0 auto}
+.lvl .bname{text-align:center;font-weight:700;color:var(--muted);font-size:15px;margin-top:-6px}
+.btn{min-height:50px;border-radius:14px;border:2px solid var(--line);font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 10px;background:var(--card);box-shadow:0 3px 0 var(--line)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.btn.red{background:var(--red);color:#fff}
+.btn svg{width:20px;height:20px;flex:none}
+.best{font-size:14px;color:var(--muted);text-align:center;margin-top:-4px}
+.note{color:var(--muted);font-size:14px;text-align:center;margin:16px 0 4px}
+.reset{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline;min-height:44px;align-self:center}
+/* play */
+.hud{height:34px;display:flex;align-items:center;justify-content:center;gap:7px}
+.pip{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--card)}
+.pip.ok{background:var(--good)}.pip.miss{background:#f0a23a}.pip.now{outline:3px solid var(--red);outline-offset:2px}
+.timer{flex:1;height:16px;border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.timer i{display:block;height:100%;width:100%;background:var(--red);transition:width .1s linear}
+.score{font-weight:800;font-size:26px;min-width:56px;text-align:right}
+.board{position:relative;width:min(100%,400px);height:104px;margin:10px auto 0;display:grid;place-items:center;border-radius:14px;
+background:repeating-linear-gradient(0deg,transparent 0 10px,#00000018 10px 12px),linear-gradient(var(--wood),var(--wood2));box-shadow:inset 0 3px 0 #ffffff40,0 6px 0 #00000030}
+.eq{position:relative;z-index:1;font-weight:800;font-size:clamp(42px,13vw,62px);color:#fff;text-shadow:0 3px 0 #3a1f0b;white-space:nowrap;letter-spacing:.02em}
+.board.enter{animation:drop .35s ease-out}
+@keyframes drop{from{transform:translateY(-24px);opacity:0}}
+.arena{position:relative;min-height:176px;display:flex;justify-content:center;align-items:flex-end;gap:26px;padding-bottom:12px}
+.arena::before{content:'';position:absolute;left:50%;bottom:4px;width:min(92%,320px);height:22px;transform:translateX(-50%);border-radius:50%;background:var(--mat)}
+.arena .fighter{width:108px;height:126px;position:relative}
+.arena.hinting .fighter,.arena.hinting .pow{display:none}
+.arena.hinting{align-items:center;padding-bottom:0}.arena.hinting::before{display:none}
+.fighter{transform-origin:50% 92%;overflow:visible}
+.arm{transform-box:view-box;transform-origin:80px 64px}
+.leg{transform-box:view-box;transform-origin:68px 98px}
+.hero.punch{animation:lunge .55s ease-out}.hero.punch .arm{animation:jab .55s ease-out}
+@keyframes lunge{35%,55%{transform:translateX(42px)}}
+@keyframes jab{35%,55%{transform:rotate(55deg)}}
+.hero.kick{animation:lean .6s ease-out}.hero.kick .leg{animation:kickL .6s ease-out}
+@keyframes lean{35%,60%{transform:translateX(24px) rotate(-8deg)}}
+@keyframes kickL{35%,60%{transform:rotate(-80deg)}}
+.hero.throw{animation:grab 1s ease-out}.hero.throw .arm{animation:sweep 1s ease-out}
+@keyframes grab{20%,45%{transform:translateX(46px)}}
+@keyframes sweep{20%{transform:rotate(55deg)}45%{transform:rotate(-140deg)}}
+.foe.hit{animation:hit .6s ease-out}
+@keyframes hit{40%{transform:translateX(34px) rotate(14deg)}}
+.foe.down{animation:down 1.15s ease-out}
+@keyframes down{25%{transform:translateX(40px) rotate(24deg)}45%,78%{transform:translate(46px,6px) rotate(90deg)}}
+.foe.flip{animation:flip 1.25s ease-in-out}
+@keyframes flip{25%{transform:translate(-14px,-72px) rotate(-110deg)}48%,80%{transform:translate(34px,6px) rotate(-270deg)}100%{transform:rotate(-360deg)}}
+.foe.dodge{animation:dodge .45s ease-out}
+@keyframes dodge{40%{transform:translate(22px,-16px)}}
+.pow{position:absolute;left:50%;top:6px;width:104px;height:84px;margin-left:-10px;display:grid;place-items:center;pointer-events:none;opacity:0;z-index:2}
+.pow svg{position:absolute;inset:0;width:100%;height:100%}
+.pow b{position:relative;font-weight:800;font-size:19px;color:#1b1b22;transform:rotate(-8deg)}
+.pow.go{animation:pow .55s ease-out}
+@keyframes pow{0%{opacity:0;transform:scale(.3)}25%{opacity:1;transform:scale(1.15)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+.hint{width:100%;padding:8px 4px;display:flex;flex-direction:column;gap:8px}
+.dots{display:grid;grid-template-columns:repeat(10,minmax(0,26px));gap:5px;justify-content:center}
+.dot{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);position:relative}
+.dot.a{background:var(--red)}.dot.b{background:#2a6fdb}
+.dot.x{background:var(--card);opacity:.55}
+.dot.x::after{content:'';position:absolute;inset:-3px;background:linear-gradient(45deg,transparent 45%,var(--ink) 45% 57%,transparent 57%)}
+.nline{width:100%;height:auto;display:block}
+.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+.ans{min-height:78px;font-weight:800;font-size:42px;line-height:1;background:var(--card);border:3px solid var(--line);border-radius:18px;box-shadow:0 5px 0 var(--line)}
+.ans:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.ans.good{background:var(--good);color:#fff}
+.ans.bad{background:light-dark(#ece7de,#33313a);color:var(--muted);text-decoration:line-through;animation:shake .35s}
+.ans.show{outline:4px solid var(--good);outline-offset:2px}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.hintbtn{margin:14px auto 0;width:min(100%,220px)}
+.hintbtn.nudge{animation:pulse 1s 2}
+@keyframes pulse{50%{transform:scale(1.07);background:#ffe27a;color:#1b1b22}}
+/* done */
+.done{align-items:center;text-align:center;justify-content:center;gap:12px;padding-bottom:30px}
+.done .big{font-weight:800;font-size:clamp(52px,16vw,72px);line-height:1}
+.done h2{font:400 clamp(34px,10vw,46px)/1.05 'Kaushan Script',cursive;margin:0;color:var(--red);text-wrap:balance}
+.done .beltbig{width:min(80%,280px);height:auto}
+.done .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+.done .row .btn{flex:1 1 140px;max-width:220px}
+.stars{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.done.win .beltbig{animation:tie 1s ease-out}
+@keyframes tie{from{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.1)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(max-width:360px){.ans{font-size:36px;min-height:70px}.lvl h2{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <button class="icon" id="homeBtn" aria-label="Home" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8M5 9.5V21h14V9.5"/></svg></button>
+  <div class="chip" id="chip"></div>
+  <button class="icon" id="muteBtn" aria-label="Sound on or off"></button>
+</header>
+
+<section id="home">
+  <div class="hero">
+    <h1>Ninja Math</h1>
+    <div id="heroNinja"></div>
+    <div class="mat"></div>
+  </div>
+  <div class="levels" id="levels"></div>
+  <p class="note">8 of 10 right earns the next belt. Sparring is 60 seconds.</p>
+  <button class="reset" id="resetBtn">Reset belts</button>
+</section>
+
+<section id="play" hidden>
+  <div class="hud" id="hud"></div>
+  <div class="board" id="board"><div class="eq" id="eq"></div></div>
+  <div class="arena" id="arena"><div class="pow" id="pow"></div><div class="hint" id="hint" hidden></div></div>
+  <div class="answers" id="answers"></div>
+  <button class="btn hintbtn" id="hintBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></svg>Hint</button>
+</section>
+
+<section id="done" class="done" hidden></section>
+</div>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const KEY = 'ninjaMath.v1';
+const BELTS = [
+  {n:'White', c:'#f4f4f4'}, {n:'Yellow', c:'#f6c915'}, {n:'Orange', c:'#f08a24'},
+  {n:'Green', c:'#2fa84f'}, {n:'Blue', c:'#2a6fdb'}, {n:'Brown', c:'#7a4a25'}, {n:'Black', c:'#15151a'}
+];
+const TOP = BELTS.length - 1;
+const LEVELS = {1:{label:'1–10', max:10}, 2:{label:'1–20', max:20}};
+const TEST_LEN = 10, PASS = 8, SPAR_SECS = 60;
+
+let save = {belt:{1:0, 2:0}, best:{1:0, 2:0}, mute:false};
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.belt && s.best) save = Object.assign(save, s); } catch (e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
+
+const fighter = kind => {
+  const foe = kind === 'foe';
+  const st = foe ? '--suit:#6a3fa0;--edge:#3b2160;--b:#15151a;--band:#f6c915' : '--b:var(--belt);--band:#d62828';
+  return `<svg class="fighter ${kind}" viewBox="0 0 120 140" style="${st}" aria-hidden="true">
+  <ellipse cx="60" cy="132" rx="34" ry="6" fill="#00000026"/>
+  <g${foe ? ' transform="translate(120 0) scale(-1 1)"' : ''}>
+  <path d="M45 96 38 128h14l6-28z" style="fill:var(--suit);stroke:var(--edge);stroke-width:1.5"/>
+  <path d="M40 64q-14 14-10 30" fill="none" style="stroke:var(--suit)" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="30" cy="96" r="6" fill="#f1c79b"/>
+  <g class="leg"><path d="M75 96l7 32H68l-6-28z" style="fill:var(--suit);stroke:var(--edge);stroke-width:1.5"/></g>
+  <rect x="38" y="58" width="44" height="44" rx="12" style="fill:var(--suit);stroke:var(--edge);stroke-width:1.5"/>
+  <rect x="37" y="86" width="46" height="8" rx="2" style="fill:var(--b)" stroke="#00000055"/>
+  <path d="m57 92-7 15h6l4-12zm6 0 7 15h-6l-4-12z" style="fill:var(--b)" stroke="#00000055"/>
+  <g class="arm"><path d="M80 64q15-10 20-26" fill="none" style="stroke:var(--suit)" stroke-width="11" stroke-linecap="round"/><circle cx="101" cy="34" r="6.5" fill="#f1c79b"/></g>
+  <path d="M38 23q-15-3-24 6 11-1 22 3z" style="fill:var(--band)"/>
+  <circle cx="60" cy="36" r="24" style="fill:var(--suit);stroke:var(--edge);stroke-width:1.5"/>
+  <rect x="36" y="19" width="48" height="7" rx="3" style="fill:var(--band)"/>
+  <rect x="42" y="30" width="36" height="13" rx="6.5" fill="#f1c79b"/>
+  <ellipse cx="52" cy="37" rx="3" ry="3.7" fill="#1b1b22"/><ellipse cx="68" cy="37" rx="3" ry="3.7" fill="#1b1b22"/>
+  <circle cx="53" cy="35.5" r="1" fill="#fff"/><circle cx="69" cy="35.5" r="1" fill="#fff"/>
+  ${foe ? '<path d="M47 31.5l8 2.5M73 31.5l-8 2.5" stroke="#1b1b22" stroke-width="2.4" stroke-linecap="round"/>' : ''}
+  </g></svg>`;
+};
+const POW_STAR = '<svg viewBox="0 0 104 84"><path d="M52 2l9 20 21-12-6 22 26 2-21 13 17 18-25-4-3 21-14-17-15 17-2-21-25 5 16-19L2 34l26-2-6-22 21 12z" fill="#ffd23f" stroke="#1b1b22" stroke-width="3" stroke-linejoin="round"/></svg>';
+
+const beltSVG = (c, cls) => `<svg class="${cls}" viewBox="0 0 200 92" aria-hidden="true">
+  <rect x="4" y="20" width="192" height="22" rx="5" fill="${c}" stroke="#1b1b22" stroke-width="3"/>
+  <path d="M88 38 62 86h20l20-40zM112 38l26 48h-20l-20-40z" fill="${c}" stroke="#1b1b22" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="84" y="12" width="32" height="38" rx="7" fill="${c}" stroke="#1b1b22" stroke-width="3"/>
+</svg>`;
+
+const SPEAKER = on => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/>${on ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="m17 9 5 6m0-6-5 6"/>'}</svg>`;
+
+/* sound */
+let actx = null;
+function tone(f, d, t = 'triangle', at = 0, v = .18) {
+  if (save.mute) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), s = actx.currentTime + at;
+    o.type = t; o.frequency.value = f; g.gain.setValueAtTime(v, s); g.gain.exponentialRampToValueAtTime(.001, s + d);
+    o.connect(g).connect(actx.destination); o.start(s); o.stop(s + d);
+  } catch (e) {}
+}
+const sfx = {
+  good: () => { tone(660, .12); tone(990, .18, 'triangle', .09); },
+  bad: () => tone(150, .25, 'square', 0, .08),
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .3, 'triangle', i * .13))
+};
+
+/* problems */
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = rnd(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+
+function makeProblem(level, prev) {
+  let p, tries = 0;
+  do {
+    const add = Math.random() < .5;
+    if (level === 1) {
+      if (add) { const a = rnd(1, 9); p = {a, b: rnd(1, 10 - a), op: '+'}; }
+      else { const a = rnd(2, 10); p = {a, b: rnd(1, a), op: '-'}; }
+    } else {
+      if (add) p = {a: rnd(1, 10), b: rnd(1, 10), op: '+'};
+      else { const b = rnd(1, 10), c = rnd(1, 10); p = {a: b + c, b, op: '-'}; }
+    }
+    p.ans = p.op === '+' ? p.a + p.b : p.a - p.b;
+  } while (prev && p.a === prev.a && p.b === prev.b && p.op === prev.op && ++tries < 12);
+  p.choices = makeChoices(p, LEVELS[level].max);
+  return p;
+}
+
+/* believable wrong answers: off by one or two, or the result of the other operation */
+function makeChoices(p, max) {
+  const set = new Set([p.ans]);
+  const wrongOp = p.op === '+' ? p.a - p.b : p.a + p.b;
+  const pool = [];
+  if (Math.random() < .6) pool.push(wrongOp);
+  pool.push(...shuffle([p.ans + 1, p.ans - 1, p.ans + 2, p.ans - 2]), ...shuffle([p.ans + 3, p.ans - 3, p.ans + 4, p.ans - 4, p.ans + 5]));
+  for (const v of pool) { if (set.size >= 4) break; if (v >= 0 && v <= max) set.add(v); }
+  return shuffle([...set]);
+}
+
+/* state */
+const G = {mode: 'belt', level: 1, i: 0, score: 0, results: [], p: null, missed: false, lock: false, timer: null, left: 0, hint: false};
+
+function show(id) {
+  ['home', 'play', 'done'].forEach(s => $('#' + s).hidden = s !== id);
+  $('#homeBtn').hidden = id === 'home';
+  window.scrollTo(0, 0);
+}
+function setBelt(idx) { document.documentElement.style.setProperty('--belt', BELTS[idx].c); }
+
+function renderMute() { $('#muteBtn').innerHTML = SPEAKER(!save.mute); }
+
+function renderHome() {
+  stopTimer();
+  setBelt(Math.max(save.belt[1], save.belt[2]));
+  $('#chip').textContent = '';
+  $('#heroNinja').innerHTML = `<div class="duo">${fighter('hero')}${fighter('foe')}</div>`;
+  $('#levels').innerHTML = [1, 2].map(l => {
+    const b = BELTS[save.belt[l]];
+    return `<div class="lvl">
+      <h2>${LEVELS[l].label}</h2>
+      ${beltSVG(b.c, 'beltpic')}
+      <div class="bname">${b.n} belt</div>
+      <button class="btn red" data-go="belt" data-l="${l}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Belt test</button>
+      <button class="btn" data-go="spar" data-l="${l}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg>Sparring</button>
+      <div class="best">Best: ${save.best[l]}</div>
+    </div>`;
+  }).join('');
+  resetArmed = false; $('#resetBtn').textContent = 'Reset belts';
+  show('home');
+}
+
+function start(mode, level) {
+  Object.assign(G, {mode, level, i: 0, score: 0, results: [], p: null, lock: false});
+  const beltIdx = save.belt[level];
+  setBelt(beltIdx);
+  const ar = $('#arena'); ar.querySelectorAll('.fighter').forEach(f => f.remove()); ar.insertAdjacentHTML('beforeend', fighter('hero') + fighter('foe'));
+  if (mode === 'belt') {
+    const target = BELTS[Math.min(beltIdx + 1, TOP)];
+    $('#chip').innerHTML = `${LEVELS[level].label} <span class="swatch" style="background:${target.c}"></span>`;
+  } else {
+    $('#chip').innerHTML = `${LEVELS[level].label} sparring`;
+    G.left = SPAR_SECS * 10;
+    G.timer = setInterval(tick, 100);
+  }
+  show('play');
+  nextQ();
+}
+
+function renderHud() {
+  if (G.mode === 'belt') {
+    $('#hud').innerHTML = Array.from({length: TEST_LEN}, (_, k) => {
+      const c = k < G.results.length ? (G.results[k] ? 'ok' : 'miss') : (k === G.i ? 'now' : '');
+      return `<span class="pip ${c}"></span>`;
+    }).join('');
+  } else {
+    $('#hud').innerHTML = `<div class="timer"><i id="bar" style="width:${G.left / (SPAR_SECS * 10) * 100}%"></i></div><div class="score">${G.score}</div>`;
+  }
+}
+
+function tick() {
+  G.left--;
+  const bar = $('#bar'); if (bar) bar.style.width = (G.left / (SPAR_SECS * 10) * 100) + '%';
+  if (G.left <= 0) { stopTimer(); finishSpar(); }
+}
+function stopTimer() { if (G.timer) { clearInterval(G.timer); G.timer = null; } }
+
+function nextQ() {
+  G.p = makeProblem(G.level, G.p);
+  G.missed = false; G.lock = false;
+  hideHint();
+  const board = $('#board');
+  board.classList.remove('enter'); void board.offsetWidth; board.classList.add('enter');
+  $('#eq').textContent = `${G.p.a} ${G.p.op === '+' ? '+' : '−'} ${G.p.b} = ?`;
+  $('#answers').innerHTML = G.p.choices.map(v => `<button class="ans" data-v="${v}">${v}</button>`).join('');
+  $('#hintBtn').classList.remove('nudge');
+  renderHud();
+}
+
+function answer(btn) {
+  if (G.lock || btn.disabled) return;
+  const v = +btn.dataset.v;
+  if (v === G.p.ans) {
+    G.lock = true;
+    btn.classList.add('good');
+    sfx.good(); attack();
+    if (G.mode === 'belt') {
+      G.results.push(!G.missed); if (!G.missed) G.score++;
+      G.i++;
+      renderHud();
+      setTimeout(() => G.i >= TEST_LEN ? finishBelt() : nextQ(), 1350);
+    } else {
+      G.score++; renderHud();
+      setTimeout(() => { if (G.timer) nextQ(); }, 650);
+    }
+  } else {
+    sfx.bad(); dodge();
+    btn.classList.add('bad'); btn.disabled = true;
+    if (G.mode === 'belt') {
+      G.missed = true;
+      const hb = $('#hintBtn'); hb.classList.remove('nudge'); void hb.offsetWidth; hb.classList.add('nudge');
+    } else {
+      G.lock = true;
+      const right = [...document.querySelectorAll('.ans')].find(b => +b.dataset.v === G.p.ans);
+      if (right) right.classList.add('show');
+      setTimeout(() => { if (G.timer) nextQ(); }, 700);
+    }
+  }
+}
+
+const MOVES = {punch: {foe: 'hit', at: 190, words: ['POW!', 'BAM!']}, kick: {foe: 'down', at: 210, words: ['WHAM!', 'BOOM!']}, throw: {foe: 'flip', at: 230, words: ['HI-YA!', 'WHOOSH!']}};
+let lastMove = '';
+function anim(el, cls) {
+  if (!el) return;
+  el.classList.remove('punch', 'kick', 'throw', 'hit', 'down', 'flip', 'dodge');
+  void el.getBoundingClientRect();
+  el.classList.add(cls);
+}
+function attack() {
+  hideHint();
+  const opts = Object.keys(MOVES).filter(m => m !== lastMove);
+  const m = opts[rnd(0, opts.length - 1)]; lastMove = m;
+  const mv = MOVES[m];
+  anim($('#arena .hero'), m);
+  setTimeout(() => {
+    anim($('#arena .foe'), mv.foe);
+    const pow = $('#pow');
+    pow.innerHTML = POW_STAR + `<b>${mv.words[rnd(0, 1)]}</b>`;
+    pow.classList.remove('go'); void pow.offsetWidth; pow.classList.add('go');
+  }, mv.at);
+}
+function dodge() { if (!G.hint) anim($('#arena .foe'), 'dodge'); }
+
+/* hint: counting dots plus a number line with one hop per step */
+function showHint() {
+  const {a, b, op} = G.p, max = LEVELS[G.level].max;
+  let dots = '';
+  if (op === '+') dots = '<span class="dot a"></span>'.repeat(a) + '<span class="dot b"></span>'.repeat(b);
+  else dots = '<span class="dot a"></span>'.repeat(a - b) + '<span class="dot x"></span>'.repeat(b);
+  const x0 = 14, W = 372, X = n => x0 + n * (W / max), y = 58;
+  let svg = `<line x1="${x0}" y1="${y}" x2="${x0 + W}" y2="${y}" stroke="currentColor" stroke-width="3"/>`;
+  for (let n = 0; n <= max; n++) {
+    const major = max === 10 || n % 5 === 0;
+    svg += `<line x1="${X(n)}" y1="${y - (major ? 8 : 5)}" x2="${X(n)}" y2="${y + (major ? 8 : 5)}" stroke="currentColor" stroke-width="2"/>`;
+    if (major || n === a) svg += `<text x="${X(n)}" y="${y + 28}" text-anchor="middle" font-size="${max === 10 ? 18 : 16}" font-weight="700" fill="${n === a ? '#d62828' : 'currentColor'}">${n}</text>`;
+  }
+  const dir = op === '+' ? 1 : -1, h = max === 10 ? 26 : 20;
+  for (let k = 0; k < b; k++) {
+    const s = X(a + dir * k), e = X(a + dir * (k + 1)), m = (s + e) / 2;
+    svg += `<path d="M${s} ${y - 4}Q${m} ${y - 4 - h} ${e} ${y - 4}" fill="none" stroke="#2a6fdb" stroke-width="2.6" stroke-linecap="round"/>`;
+  }
+  svg += `<circle cx="${X(a)}" cy="${y}" r="7" fill="#d62828" stroke="#1b1b22" stroke-width="2"/>`;
+  const hint = $('#hint');
+  hint.innerHTML = `<div class="dots">${dots}</div><svg class="nline" viewBox="0 0 400 96" style="color:var(--ink)" aria-hidden="true">${svg}</svg>`;
+  hint.hidden = false; $('#arena').classList.add('hinting'); G.hint = true;
+}
+function hideHint() { $('#hint').hidden = true; $('#arena').classList.remove('hinting'); G.hint = false; }
+
+function finishBelt() {
+  const l = G.level, pass = G.score >= PASS, was = save.belt[l];
+  let title, win = false;
+  if (pass && was < TOP) { save.belt[l]++; persist(); win = true; title = `${BELTS[save.belt[l]].n} belt!`; }
+  else if (pass) { win = true; title = 'Black belt master!'; }
+  else title = 'So close! Try again';
+  const now = BELTS[save.belt[l]];
+  setBelt(save.belt[l]);
+  if (win) sfx.win();
+  const stars = G.results.map(ok => `<span class="pip ${ok ? 'ok' : 'miss'}"></span>`).join('');
+  const done = $('#done');
+  done.className = 'done' + (win ? ' win' : '');
+  done.innerHTML = `${beltSVG(win ? now.c : BELTS[Math.min(was + 1, TOP)].c, 'beltbig')}
+    <h2>${title}</h2>
+    <div class="big">${G.score} / ${TEST_LEN}</div>
+    <div class="stars">${stars}</div>
+    <div class="row">
+      <button class="btn red" data-go="belt" data-l="${l}">${win && save.belt[l] < TOP ? 'Next belt' : 'Again'}</button>
+      <button class="btn" data-go="home">Home</button>
+    </div>`;
+  $('#chip').textContent = '';
+  show('done');
+}
+
+function finishSpar() {
+  const l = G.level, best = G.score > save.best[l];
+  if (best) { save.best[l] = G.score; persist(); sfx.win(); }
+  const done = $('#done');
+  done.className = 'done' + (best ? ' win' : '');
+  done.innerHTML = `<div id="doneNinja">${fighter('hero')}</div>
+    <h2>${best ? 'New best!' : 'Time!'}</h2>
+    <div class="big">${G.score}</div>
+    <div class="best">Best: ${save.best[l]}</div>
+    <div class="row">
+      <button class="btn red" data-go="spar" data-l="${l}">Spar again</button>
+      <button class="btn" data-go="home">Home</button>
+    </div>`;
+  $('#doneNinja .fighter').style.cssText = 'width:120px;height:140px';
+  $('#chip').textContent = '';
+  show('done');
+}
+
+/* events */
+let resetArmed = false;
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) {
+    const l = +go.dataset.l;
+    if (go.dataset.go === 'home') renderHome(); else start(go.dataset.go, l);
+    return;
+  }
+  const ans = e.target.closest('.ans');
+  if (ans) answer(ans);
+});
+$('#homeBtn').addEventListener('click', renderHome);
+$('#hintBtn').addEventListener('click', () => { if (!G.lock) (G.hint ? hideHint() : showHint()); });
+$('#muteBtn').addEventListener('click', () => { save.mute = !save.mute; persist(); renderMute(); });
+$('#resetBtn').addEventListener('click', () => {
+  if (!resetArmed) { resetArmed = true; $('#resetBtn').textContent = 'Tap again to reset'; return; }
+  save.belt = {1: 0, 2: 0}; save.best = {1: 0, 2: 0}; persist(); renderHome();
+});
+
+renderMute();
+renderHome();
+}
+</script>
+</body>
+</html>
