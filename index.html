@@ -116,6 +116,47 @@ background:repeating-linear-gradient(0deg,transparent 0 10px,#00000018 10px 12px
 .stars{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
 .done.win .beltbig{animation:tie 1s ease-out}
 @keyframes tie{from{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.1)}}
+/* tablets and larger: scale everything up */
+@media (min-width:700px){
+.app{max-width:860px}
+header{height:72px}.chip{font-size:22px}.icon{width:52px;height:52px}
+.hero h1{font-size:76px}.duo{gap:44px}.duo .fighter{width:180px;height:210px}.mat{width:440px}
+.levels{gap:20px}.lvl{padding:20px;gap:14px}.lvl h2{font-size:50px}.lvl .beltpic{height:62px}.lvl .bname{font-size:18px}
+.btn{min-height:62px;font-size:23px}.btn svg{width:24px;height:24px}.note,.best,.reset{font-size:17px}
+.hud{height:50px;gap:11px}.pip{width:30px;height:30px}.timer{height:22px}.score{font-size:36px}
+.board{width:min(100%,660px);height:150px;margin-top:14px}.eq{font-size:88px}
+.arena{min-height:260px;gap:50px}.arena .fighter{width:170px;height:198px}.arena::before{width:min(80%,500px);height:28px}
+.pow{width:150px;height:120px}.pow b{font-size:27px}
+.answers{gap:18px;margin-top:10px}.ans{min-height:124px;font-size:68px;border-radius:26px}
+.hintbtn{width:300px;margin-top:20px}
+.dots{grid-template-columns:repeat(10,minmax(0,42px));gap:9px}.nline{max-width:660px;margin:0 auto}
+#play{justify-content:center}.done .big{font-size:100px}.done h2{font-size:62px}.done .beltbig{width:min(70%,380px)}.done .row .btn{max-width:280px}
+}
+/* sideways tablet or computer: game on the left, answers on the right */
+@media (min-width:900px) and (orientation:landscape){
+.app{max-width:1240px}
+#home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:center;column-gap:40px}
+#home .note,#home .reset{grid-column:1/-1}
+#play{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"hud hud" "board ans" "arena ans" "arena hb";column-gap:36px;align-content:center;grid-template-rows:auto auto auto auto}
+.hud{grid-area:hud}.board{grid-area:board}.arena{grid-area:arena}.answers{grid-area:ans;align-self:center}.hintbtn{grid-area:hb;align-self:start}
+}
+/* sideways phone: short screen, keep it all visible */
+@media (orientation:landscape) and (max-height:520px){
+.app{max-width:none}
+header{height:48px}.icon{width:44px;height:44px}.chip{font-size:17px}
+#home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);column-gap:20px;align-items:center}
+#home .note,#home .reset{grid-column:1/-1;margin:6px 0 0}
+.hero h1{font-size:40px}.duo .fighter{width:96px;height:112px}.mat{width:240px}
+.lvl{padding:10px;gap:8px}.lvl h2{font-size:30px}.lvl .beltpic{height:38px}.btn{min-height:46px;font-size:17px}
+#play{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"hud hud" "board ans" "arena ans" "arena hb";column-gap:20px;grid-template-rows:auto auto 1fr auto}
+.hud{grid-area:hud;height:30px}.pip{width:20px;height:20px}
+.board{grid-area:board;height:76px;margin-top:4px}.eq{font-size:46px}
+.arena{grid-area:arena;min-height:150px;gap:26px}.arena .fighter{width:92px;height:108px}
+.pow{width:96px;height:78px}.pow b{font-size:17px}
+.answers{grid-area:ans;align-self:center;gap:10px}.ans{min-height:68px;font-size:38px}
+.hintbtn{grid-area:hb;margin-top:8px;min-height:44px}
+.dots{grid-template-columns:repeat(10,minmax(0,20px));gap:4px}
+}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:360px){.ans{font-size:36px;min-height:70px}.lvl h2{font-size:28px}}
 </style>
