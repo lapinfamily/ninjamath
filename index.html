@@ -117,6 +117,16 @@ background:repeating-linear-gradient(0deg,transparent 0 10px,#00000018 10px 12px
 .pow.left{margin-left:-104px}
 @keyframes pow{0%{opacity:0;transform:scale(.3)}25%{opacity:1;transform:scale(1.15)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
 .hint{width:100%;padding:8px 4px;display:flex;flex-direction:column;gap:8px}
+.hint{display:flex;flex-direction:column;align-items:center;gap:6px;--c:30px}
+.strips{display:flex;flex-direction:column;gap:6px}
+.strip{display:flex;border:2.5px solid var(--line);border-radius:6px;background:var(--card);overflow:hidden}
+.cell{width:var(--c);height:var(--c);display:grid;place-items:center;border-right:1.5px solid light-dark(#0000002e,#ffffff30)}
+.cell:nth-child(5){border-right:3px solid var(--line)}.cell:last-child{border-right:0}
+.ctr{width:74%;height:74%;border-radius:50%;border:2px solid #1b1b22;position:relative}
+.ctr.a{background:#d62828}.ctr.b{background:#2a6fdb}
+.ctr.x{background:#d62828;opacity:.4}
+.ctr.x::after{content:'';position:absolute;inset:-4px;background:linear-gradient(45deg,transparent 43%,var(--ink) 43% 58%,transparent 58%)}
+.bond{width:190px;height:auto;color:var(--ink);display:block}
 .dots{display:grid;grid-template-columns:repeat(10,minmax(0,26px));gap:5px;justify-content:center}
 .dot{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);position:relative}
 .dot.a{background:var(--red)}.dot.b{background:#2a6fdb}
@@ -156,7 +166,7 @@ header{height:72px}.chip{font-size:22px}.icon{width:52px;height:52px}
 .pow{width:150px;height:120px}.pow.left{margin-left:-150px}.pow.big{width:210px;height:168px;margin-left:-40px}.pow.big b{font-size:36px}.pow b{font-size:27px}
 .answers{gap:18px;margin-top:10px}.ans{min-height:124px;font-size:68px;border-radius:26px}
 .hintbtn{width:300px;margin-top:20px}
-.dots{grid-template-columns:repeat(10,minmax(0,42px));gap:9px}.nline{max-width:660px;margin:0 auto}
+.hint{flex-direction:row;justify-content:center;gap:34px;--c:42px}.bond{width:250px}
 #play{justify-content:center}.done .big{font-size:100px}.done h2{font-size:62px}.done .beltbig{width:min(70%,380px)}.done .row .btn{max-width:280px}
 }
 /* sideways tablet or computer: game on the left, answers on the right */
@@ -165,7 +175,7 @@ header{height:72px}.chip{font-size:22px}.icon{width:52px;height:52px}
 #home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:center;column-gap:40px}
 #home .note,#home .reset{grid-column:1/-1}
 #play{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"hud hud" "board ans" "arena ans" "arena hb";column-gap:36px;align-content:center;grid-template-rows:auto auto auto auto}
-.hud{grid-area:hud}.board{grid-area:board}.arena{grid-area:arena}.answers{grid-area:ans;align-self:center}.hintbtn{grid-area:hb;align-self:start}
+.hud{grid-area:hud}.board{grid-area:board}.arena{grid-area:arena}.hint{flex-direction:column;gap:10px;--c:40px}.answers{grid-area:ans;align-self:center}.hintbtn{grid-area:hb;align-self:start}
 }
 /* sideways phone: short screen, keep it all visible */
 @media (orientation:landscape) and (max-height:520px){
@@ -182,7 +192,7 @@ header{height:48px}.icon{width:44px;height:44px}.chip{font-size:17px}
 .pow{width:96px;height:78px}.pow.left{margin-left:-96px}.pow b{font-size:17px}
 .answers{grid-area:ans;align-self:center;gap:10px}.ans{min-height:68px;font-size:38px}
 .hintbtn{grid-area:hb;margin-top:8px;min-height:44px}
-.dots{grid-template-columns:repeat(10,minmax(0,20px));gap:4px}
+.hint{flex-direction:row;gap:12px;--c:19px}.bond{width:150px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:360px){.ans{font-size:36px;min-height:70px}.lvl h2{font-size:28px}}
@@ -464,27 +474,45 @@ function strike(who) {
 function attack() { hideHint(); strike('hero'); }
 function counter() { if (!G.hint) strike('foe'); }
 
-/* hint: counting dots plus a number line with one hop per step */
+/* hint: Singapore-style number bond + ten strips; make-10 when crossing ten */
+const RED = '#d62828';
+const q = t => String(t).replace('?', `<tspan fill="${RED}">?</tspan>`);
+const many = (c, n) => Array(Math.max(n, 0)).fill(c);
+const ten = arr => arr.concat(many('', 10 - arr.length));
+const stripHTML = cells => `<div class="strip">${cells.map(c => `<span class="cell">${c ? `<i class="ctr ${c}"></i>` : ''}</span>`).join('')}</div>`;
+function classicBond(w, l, r) {
+  const circ = (x, y, t) => `<circle cx="${x}" cy="${y}" r="22" fill="var(--card)" stroke="currentColor" stroke-width="3"/><text x="${x}" y="${y}" dy=".36em" text-anchor="middle" font-size="22" font-weight="800" fill="${t === '?' ? RED : 'currentColor'}">${t}</text>`;
+  return `<svg class="bond" viewBox="0 0 200 132" aria-hidden="true"><path d="M100 28 55 102M100 28l45 74" stroke="currentColor" stroke-width="3"/>${circ(100, 28, w)}${circ(55, 104, l)}${circ(145, 104, r)}</svg>`;
+}
+function splitBond(t1, op, t2, side, p1, p2, steps) {
+  const x = side === 'left' ? 62 : 138;
+  const part = (cx, t) => `<circle cx="${cx}" cy="72" r="16" fill="var(--card)" stroke="currentColor" stroke-width="2.5"/><text x="${cx}" y="72" dy=".36em" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">${t}</text>`;
+  return `<svg class="bond" viewBox="0 0 200 162" aria-hidden="true">
+    <g font-weight="800" font-size="27" text-anchor="middle" fill="currentColor"><text x="62" y="28">${t1}</text><text x="100" y="28">${op}</text><text x="138" y="28">${t2}</text></g>
+    <path d="M${x} 36 ${x - 22} 58M${x} 36l22 22" stroke="currentColor" stroke-width="2.5"/>${part(x - 24, p1)}${part(x + 24, p2)}
+    <g font-weight="800" font-size="23" text-anchor="middle" fill="currentColor"><text x="100" y="122">${q(steps[0])}</text><text x="100" y="153">${q(steps[1])}</text></g></svg>`;
+}
+function hintPlan({a, b, op}) {
+  const M = '−';
+  if (op === '+') {
+    if (a + b <= 10) return {strips: [ten([...many('a', a), ...many('b', b)])], bond: classicBond('?', a, b)};
+    const big = a >= b ? 'a' : 'b', small = a >= b ? 'b' : 'a', L = Math.max(a, b), S = Math.min(a, b);
+    if (L === 10) return {strips: [many(big, 10), ten(many(small, S))], bond: classicBond('?', a, b)};
+    const need = 10 - L, rest = S - need;
+    return {strips: [[...many(big, L), ...many(small, need)], ten(many(small, rest))],
+      bond: splitBond(a, '+', b, small === 'a' ? 'left' : 'right', need, rest, [`${L} + ${need} = 10`, `10 + ${rest} = ?`])};
+  }
+  if (a <= 10) return {strips: [ten([...many('a', a - b), ...many('x', b)])], bond: classicBond(a, b, '?')};
+  const ones = a - 10;
+  if (b <= ones) return {strips: [many('a', 10), ten([...many('a', ones - b), ...many('x', b)])],
+    bond: splitBond(a, M, b, 'left', 10, ones, [`${ones} ${M} ${b} = ${ones - b}`, `10 + ${ones - b} = ?`])};
+  return {strips: [[...many('a', 10 - b), ...many('x', b)], ten(many('a', ones))],
+    bond: splitBond(a, M, b, 'left', 10, ones, [`10 ${M} ${b} = ${10 - b}`, `${10 - b} + ${ones} = ?`])};
+}
 function showHint() {
-  const {a, b, op} = G.p, max = LEVELS[G.level].max;
-  let dots = '';
-  if (op === '+') dots = '<span class="dot a"></span>'.repeat(a) + '<span class="dot b"></span>'.repeat(b);
-  else dots = '<span class="dot a"></span>'.repeat(a - b) + '<span class="dot x"></span>'.repeat(b);
-  const x0 = 14, W = 372, X = n => x0 + n * (W / max), y = 58;
-  let svg = `<line x1="${x0}" y1="${y}" x2="${x0 + W}" y2="${y}" stroke="currentColor" stroke-width="3"/>`;
-  for (let n = 0; n <= max; n++) {
-    const major = max === 10 || n % 5 === 0;
-    svg += `<line x1="${X(n)}" y1="${y - (major ? 8 : 5)}" x2="${X(n)}" y2="${y + (major ? 8 : 5)}" stroke="currentColor" stroke-width="2"/>`;
-    if (major || n === a) svg += `<text x="${X(n)}" y="${y + 28}" text-anchor="middle" font-size="${max === 10 ? 18 : 16}" font-weight="700" fill="${n === a ? '#d62828' : 'currentColor'}">${n}</text>`;
-  }
-  const dir = op === '+' ? 1 : -1, h = max === 10 ? 26 : 20;
-  for (let k = 0; k < b; k++) {
-    const s = X(a + dir * k), e = X(a + dir * (k + 1)), m = (s + e) / 2;
-    svg += `<path d="M${s} ${y - 4}Q${m} ${y - 4 - h} ${e} ${y - 4}" fill="none" stroke="#2a6fdb" stroke-width="2.6" stroke-linecap="round"/>`;
-  }
-  svg += `<circle cx="${X(a)}" cy="${y}" r="7" fill="#d62828" stroke="#1b1b22" stroke-width="2"/>`;
+  const plan = hintPlan(G.p);
   const hint = $('#hint');
-  hint.innerHTML = `<div class="dots">${dots}</div><svg class="nline" viewBox="0 0 400 96" style="color:var(--ink)" aria-hidden="true">${svg}</svg>`;
+  hint.innerHTML = `<div class="strips">${plan.strips.map(stripHTML).join('')}</div>${plan.bond}`;
   hint.hidden = false; $('#arena').classList.add('hinting'); G.hint = true;
 }
 function hideHint() { $('#hint').hidden = true; $('#arena').classList.remove('hinting'); G.hint = false; }
